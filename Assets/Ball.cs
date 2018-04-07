@@ -9,6 +9,8 @@ using UnityEngine.UI.Extensions;
 public class Ball : MonoBehaviour {
 
     public float shootforce;
+    Transform aimPosTransform;
+    Vector2 aimPosition;
     bool wasPressed;
     Rigidbody2D rb;
     Vector2 startPosition;
@@ -17,19 +19,13 @@ public class Ball : MonoBehaviour {
     int objectHitCount;
     bool wasShot;
     Vector2 shotDirection;
-    public Vector2 StartPosition
-    {
-        get { return startPosition; }
-        set { startPosition = value; }
-    }
-
-    public void SetRigidbodyPosition(Vector2 aPosition)
-    {
-        //rb.position = aPosition;
-        transform.localPosition = aPosition;
-    }
 
     private void OnEnable()
+    {
+        Init();
+    }
+
+    public void Init()
     {
         wasShot = false;
         objectHitCount = 0;
@@ -37,14 +33,11 @@ public class Ball : MonoBehaviour {
         rb = GetComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.gravityScale = 0f;
-        startPosition = transform.localPosition;//rb.position;
-        Debug.Log("StartPosition: " + StartPosition.ToString());
+        startPosition = transform.TransformPoint(Vector3.zero);
+        transform.position = startPosition;
         Rect parentRect = transform.parent.GetComponent<RectTransform>().rect;
-        //Rect mineRect = GetComponent<RectTransform>().rect;
-        //float yDisty
-        //line1.sizeDelta = new Vector2(20, 30);
-        //Debug.Log("xMin: " + parentRect.xMin + " xMax: " + parentRect.xMax);
-        //Debug.Log("yMin: " + parentRect.yMin + " yMax: " + parentRect.yMax);
+
+        aimPosTransform = GameObject.FindGameObjectWithTag("AimPoint").transform;
 
         line = transform.parent.GetComponentInChildren<UILineRenderer>();
 
@@ -53,29 +46,14 @@ public class Ball : MonoBehaviour {
         points.Add(new Vector2(parentRect.xMax, parentRect.yMax));
         line.Points = points.ToArray();
         line.SetAllDirty();
-        //line1.localPosition = new Vector3(parentRect.xMin, parentRect.yMax);
-        //myLineRenderer.SetPosition(0, new Vector3(parentRect.xMax, parentRect.yMax, -1));
-        //myLineRenderer.SetPosition(1, new Vector3(mineRect.center.x, mineRect.center.y, -1));
-        //myLineRenderer.SetPosition(2, new Vector3(parentRect.xMin, parentRect.yMax));
-
     }
 
-    public void Init()
-    {
-        wasPressed = false;
-    }
-
-    // Use this for initialization
-    void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update ()
+    void Update ()
     {
         if(wasShot == true)
         {
-            transform.localPosition = new Vector3(transform.localPosition.x * shotDirection.x, transform.localPosition.y *shotDirection.y, 0f) * 10 * Time.deltaTime;
+            transform.position += new Vector3(shotDirection.x, shotDirection.y, 0f) * 300 * Time.deltaTime;
+
 
         }
 	}
@@ -84,27 +62,13 @@ public class Ball : MonoBehaviour {
     {
         if(wasPressed == true)
         {
-            Vector2 previousPos = transform.localPosition;//rb.position;
-            //rb.position = Input.mousePosition;
             transform.position = Input.mousePosition;
 
-            //float distance = (rb.position - startPosition).magnitude;
             points[1] = transform.localPosition;
             line.Points = points.ToArray();
             line.SetAllDirty();
-            //Debug.Log("Distance: " + distance.ToString());
-            //if (distance > 126f)
-              //  rb.position = previousPos;
         }
     }
-
-    /*private void OnMouseDown()
-    {
-        wasPressed = true;
-        rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.gravityScale = 0f;
-        Debug.Log("Was pressed");
-    }*/
 
     public void OnClicked()
     {
@@ -117,12 +81,12 @@ public class Ball : MonoBehaviour {
 
         wasPressed = false;
         rb.bodyType = RigidbodyType2D.Dynamic;
-        Vector2 direction = (startPosition - new Vector2(transform.localPosition.x, transform.localPosition.y));
-        Vector2 velocity = direction.normalized * /*direction.magnitude * */shootforce;
-        //rb.position = transform.position;
+        Vector2 direction = (aimPosTransform.position - transform.position/*new Vector2(transform.position.x, transform.position.y)*/);
+
         shotDirection = direction.normalized;
-        wasShot = true;
-        //rb.velocity = velocity;
+        Debug.Log("Direction: " + shotDirection);
+        //wasShot = true;
+        rb.velocity = direction.normalized * shootforce;
         Destroy(gameObject, 6f);
         //line.enabled = false;
     }

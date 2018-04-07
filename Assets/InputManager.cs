@@ -55,10 +55,5 @@ public class InputManager : MonoBehaviour {
     void SpawnNewBall()
     {
         GameObject newBall = Instantiate(ballObject, pressedObject.transform.parent) as GameObject;
-        //newBall.transform.localPosition = pressedObject.StartPosition;
-        newBall.GetComponent<Ball>().SetRigidbodyPosition(pressedObject.StartPosition);
-        //newBall.transform.localPosition = Vector3.zero;
-        newBall.GetComponent<Ball>().StartPosition = pressedObject.StartPosition;
-        newBall.GetComponent<Ball>().Init();
     }
 }
