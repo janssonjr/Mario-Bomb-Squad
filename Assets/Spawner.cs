@@ -1,26 +1,55 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour {
 
     public GameObject bombPrefab;
+    bool shouldSpawn;
     Rect rect;
-	// Use this for initialization
-	void Start () {
+
+    private void OnEnable()
+    {
+        EventManager.onStateEvent += OnStateEvent;
+    }
+
+    private void OnDisable()
+    {
+        EventManager.onStateEvent -= OnStateEvent;
+    }
+
+    private void OnStateEvent(EventManager.StateEvent obj)
+    {
+        if (obj.newState == EventManager.StateEvent.StateType.GameOver)
+        {
+            shouldSpawn = false;
+        }
+        else if(obj.newState == EventManager.StateEvent.StateType.Playing)
+        {
+
+            for(int i = transform.childCount - 1; i >= 0; --i)
+            {
+                Destroy(transform.GetChild(i).gameObject);
+            }
+            shouldSpawn = true;
+            StartCoroutine(Spawn());
+        }
+    }
+
+    void Start () {
         rect = GetComponent<RectTransform>().rect;
+        shouldSpawn = true;
         StartCoroutine(Spawn());
     }
 
-
-    // Update is called once per frame
     void Update () {
 		
 	}
 
     IEnumerator Spawn()
     {
-        while (true)
+        while (shouldSpawn)
         {
             yield return new WaitForSeconds(2);
 
@@ -33,8 +62,8 @@ public class Spawner : MonoBehaviour {
 
     Vector2 GetPointInSpawnArea()
     {
-        float xpos = Random.Range(rect.xMin, rect.xMax);
-        float ypos = Random.Range(rect.yMin, rect.yMax);
+        float xpos = UnityEngine.Random.Range(rect.xMin, rect.xMax);
+        float ypos = UnityEngine.Random.Range(rect.yMin, rect.yMax);
 
         return new Vector2(xpos, ypos);
     }

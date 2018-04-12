@@ -14,12 +14,23 @@ public class Score : MonoBehaviour {
         score = 0;
         scoreText = GetComponent<Text>();
         EventManager.onGameEvent += OnGameEvent;
+        EventManager.onStateEvent += OnStateEvent;
         UpdateScoreText();
     }
 
     private void OnDisable()
     {
         EventManager.onGameEvent -= OnGameEvent;
+        EventManager.onStateEvent -= OnStateEvent;
+    }
+
+    private void OnStateEvent(EventManager.StateEvent obj)
+    {
+        if(obj.newState == EventManager.StateEvent.StateType.Playing)
+        {
+            score = 0;
+            UpdateScoreText();
+        }
     }
 
     private void OnGameEvent(EventManager.GameEvent obj)

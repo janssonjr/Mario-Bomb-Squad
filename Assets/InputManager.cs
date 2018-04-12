@@ -44,8 +44,9 @@ public class InputManager : MonoBehaviour {
         {
             if(pressedObject != null)
             {
-                pressedObject.OnReleased();
-                SpawnNewBall();
+                bool success = pressedObject.OnReleased();
+                if(success == true)
+                    SpawnNewBall();
                 pressedObject = null;
             }
 
@@ -54,6 +55,6 @@ public class InputManager : MonoBehaviour {
 
     void SpawnNewBall()
     {
-        GameObject newBall = Instantiate(ballObject, pressedObject.transform.parent) as GameObject;
+        Instantiate(ballObject, pressedObject.transform.parent);
     }
 }

@@ -16,9 +16,11 @@ public class Ball : MonoBehaviour {
     Vector2 startPosition;
     UILineRenderer line;
     List<Vector2> points = new List<Vector2>();
-    int objectHitCount;
     bool wasShot;
     Vector2 shotDirection;
+    CircleCollider2D shotArea;
+    CircleCollider2D myCollider;
+
 
     private void OnEnable()
     {
@@ -28,7 +30,6 @@ public class Ball : MonoBehaviour {
     public void Init()
     {
         wasShot = false;
-        objectHitCount = 0;
         wasPressed = false;
         rb = GetComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
@@ -37,7 +38,7 @@ public class Ball : MonoBehaviour {
         transform.position = startPosition;
         Rect parentRect = transform.parent.GetComponent<RectTransform>().rect;
 
-        aimPosTransform = GameObject.FindGameObjectWithTag("AimPoint").transform;
+        aimPosTransform = transform.parent.Find("AimPoint").transform;
 
         line = transform.parent.GetComponentInChildren<UILineRenderer>();
 
@@ -46,6 +47,8 @@ public class Ball : MonoBehaviour {
         points.Add(new Vector2(parentRect.xMax, parentRect.yMax));
         line.Points = points.ToArray();
         line.SetAllDirty();
+        shotArea = transform.parent.Find("ShotArea").GetComponent<CircleCollider2D>();
+        myCollider = GetComponent<CircleCollider2D>();
     }
 
     void Update ()
@@ -53,8 +56,6 @@ public class Ball : MonoBehaviour {
         if(wasShot == true)
         {
             transform.position += new Vector3(shotDirection.x, shotDirection.y, 0f) * 300 * Time.deltaTime;
-
-
         }
 	}
 
@@ -62,12 +63,15 @@ public class Ball : MonoBehaviour {
     {
         if(wasPressed == true)
         {
-            transform.position = Input.mousePosition;
-
-            points[1] = transform.localPosition;
-            line.Points = points.ToArray();
-            line.SetAllDirty();
+            SetLinePos();
         }
+    }
+
+    void SetLinePos()
+    {
+        points[1] = transform.localPosition;
+        line.Points = points.ToArray();
+        line.SetAllDirty();
     }
 
     public void OnClicked()
@@ -76,32 +80,41 @@ public class Ball : MonoBehaviour {
         rb.bodyType = RigidbodyType2D.Kinematic;
     }
 
-    public void OnReleased()
+    public bool OnReleased()
     {
-
         wasPressed = false;
+        if(IsToSmallDrag())
+        {
+            Debug.Log("To small drag, returning to start pos");
+            transform.position = startPosition;
+            SetLinePos();
+            return false;
+        }
         rb.bodyType = RigidbodyType2D.Dynamic;
         Vector2 direction = (aimPosTransform.position - transform.position/*new Vector2(transform.position.x, transform.position.y)*/);
 
         shotDirection = direction.normalized;
-        Debug.Log("Direction: " + shotDirection);
-        //wasShot = true;
         rb.velocity = direction.normalized * shootforce;
         Destroy(gameObject, 6f);
-        //line.enabled = false;
+        return true;
     }
 
-    private void OnDestroy()
+    private bool IsToSmallDrag()
     {
-        EventManager.Score(objectHitCount);
+        return Physics2D.IsTouching(shotArea, myCollider);
+        /*float dragDistance = (startPosition - new Vector2(transform.position.x, transform.position.y)).magnitude;
+        Debug.Log("DragDistance: "+ dragDistance.ToString());
+        if (dragDistance < 50f)
+            return true;
+        return false;*/
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Bomb") && rb.bodyType == RigidbodyType2D.Dynamic)
         {
-            objectHitCount++;
-            Destroy(collision.gameObject);
+            EventManager.Score(1);
+            collision.GetComponent<Dissolve>().StartDissolve();
         }
     }
 

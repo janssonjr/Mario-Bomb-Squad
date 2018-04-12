@@ -1,11 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class CanvasManager : MonoBehaviour {
 
+    public List<Panel> panels = new List<Panel>();
+
     static CanvasManager instance;
+
 
     GraphicRaycaster raycaster;
 
@@ -25,8 +29,26 @@ public class CanvasManager : MonoBehaviour {
         }
     }
 
-	// Use this for initialization
-	void Start () {
+    private void OnEnable()
+    {
+        EventManager.onStateEvent += OnStateEvent;
+    }
+
+    private void OnDisable()
+    {
+        EventManager.onStateEvent -= OnStateEvent;
+    }
+
+    private void OnStateEvent(EventManager.StateEvent obj)
+    {
+        if (obj.newState == EventManager.StateEvent.StateType.GameOver)
+            panels[(int)PanelEnum.GameOverPanel].gameObject.SetActive(true);
+        else if(obj.newState == EventManager.StateEvent.StateType.Playing && obj.oldState == EventManager.StateEvent.StateType.GameOver)
+            panels[(int)PanelEnum.GameOverPanel].gameObject.SetActive(false);
+    }
+
+    // Use this for initialization
+    void Start () {
 		
 	}
 
