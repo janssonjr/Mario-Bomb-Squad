@@ -63,6 +63,7 @@ public class Ball : MonoBehaviour {
     {
         if(wasPressed == true)
         {
+            transform.position = Input.mousePosition;
             SetLinePos();
         }
     }
