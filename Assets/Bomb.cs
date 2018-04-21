@@ -7,10 +7,18 @@ public class Bomb : MonoBehaviour {
 
     public float fallSpeed;
     public Transform targetLife = null;
+    public GameObject PowerUpPrefab;
+    float fallTime;
+    Vector2 startPos;
+    Dissolve dissolve;
+    bool wasHit;
 
     private void OnEnable()
     {
         EventManager.onGameEvent += OnGameEvent;
+        fallTime = 0f;
+        dissolve = GetComponent<Dissolve>();
+        wasHit = false;
     }
 
     private void OnDisable()
@@ -18,14 +26,39 @@ public class Bomb : MonoBehaviour {
         EventManager.onGameEvent -= OnGameEvent;
     }
 
+    private void DissolveDone()
+    {
+        int rand = UnityEngine.Random.Range(0, 100);
+        Debug.Log("Chance to spawn power up: " + rand.ToString());
+        if (rand == 50)
+        {
+            SpawnPowerUp();
+        }
+        GameManager.Bombs.Remove(gameObject);
+    }
+
+    private void SpawnPowerUp()
+    {
+        GameObject go = Instantiate(PowerUpPrefab, transform.parent) as GameObject;
+        go.transform.position = transform.position;
+    }
+
     private void OnGameEvent(EventManager.GameEvent obj)
     {
         if(obj.myType == EventManager.GameEvent.EventType.LifeLost)
         {
-            if(GameManager.lives.Contains(targetLife.gameObject) == false)
+            if (targetLife == null)
+                return;
+            var life = targetLife.gameObject.GetComponent<Life>();
+            if (life == null)
             {
-                if (GameManager.lives.Count > 0)
-                    UpdateRandomTarget();
+                targetLife = null;
+                return;
+            }
+            if (LifeManager.lives.Contains(life) == false)
+            {
+                if (LifeManager.lives.Count > 0)
+                    UpdateTarget();
                 else
                     targetLife = null;
             }
@@ -33,23 +66,52 @@ public class Bomb : MonoBehaviour {
     }
 
     void Start () {
-        if(GameManager.lives.Count > 0)
-            UpdateRandomTarget();
-	}
-    void UpdateRandomTarget()
+        if(LifeManager.lives.Count > 0)
+            UpdateTarget();
+        startPos = transform.position;
+
+    }
+    void UpdateTarget()
     {
-        targetLife = GameManager.lives[UnityEngine.Random.Range(0, GameManager.lives.Count - 1)].transform;
+        float shortestDistance = float.MaxValue;
+        foreach(var life in LifeManager.lives)
+        {
+            float distance = (life.transform.position - transform.position).magnitude;
+            if(distance < shortestDistance)
+            {
+                shortestDistance = distance;
+                targetLife = life.transform;
+            }
+
+        }
     }
 
+    float totalTime = 0f;
+
     void Update () {
+        if (wasHit == true)
+            return;
         if(targetLife != null)
         {
-            Vector2 dir = transform.position - targetLife.position;
-            transform.position = new Vector2(transform.position.x, transform.position.y) - dir.normalized * fallSpeed * Time.deltaTime;
+            //Vector2 dir = transform.position - targetLife.position;
+            fallTime += GameManager.Instance.DeltaTime / fallSpeed;
+            totalTime += GameManager.Instance.DeltaTime;
+            //float time = fallTime / fallSpeed;
+            //Debug.Log("TotalTime: " + totalTime.ToString() + "fallTime: " + fallTime.ToString());
+            //transform.position = new Vector2(transform.position.x, transform.position.y) - dir.normalized * fallSpeed * GameManager.Instance.DeltaTime;
+            transform.position = Vector2.Lerp(startPos, targetLife.position, fallTime);
         }
         else
         {
-            transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y - fallSpeed * Time.deltaTime, transform.localPosition.z);
+            //transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y - fallSpeed * GameManager.Instance.DeltaTime, transform.localPosition.z);
         }
 	}
+
+    void OnHit()
+    {
+        if (wasHit == true)
+            return;
+        dissolve.StartDissolve();
+        wasHit = true;
+    }
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 public class Spawner : MonoBehaviour {
 
     public GameObject bombPrefab;
+    public float spawnDeley;
     bool shouldSpawn;
     Rect rect;
 
@@ -28,9 +29,10 @@ public class Spawner : MonoBehaviour {
         else if(obj.newState == EventManager.StateEvent.StateType.Playing)
         {
 
-            for(int i = transform.childCount - 1; i >= 0; --i)
+            for(int i = GameManager.Bombs.Count - 1; i >= 0; --i)
             {
-                Destroy(transform.GetChild(i).gameObject);
+                Destroy(GameManager.Bombs[i]);
+                GameManager.Bombs.RemoveAt(i);
             }
             shouldSpawn = true;
             StartCoroutine(Spawn());
@@ -51,12 +53,18 @@ public class Spawner : MonoBehaviour {
     {
         while (shouldSpawn)
         {
-            yield return new WaitForSeconds(2);
-
-            Vector2 position = GetPointInSpawnArea();
-            GameObject go = (GameObject)Instantiate(bombPrefab, transform);
-            go.transform.localPosition = new Vector2(position.x, position.y);
-            //go.transform.SetParent(transform);
+            yield return new WaitForSeconds(spawnDeley);
+            if (GameManager.Instance.DeltaMultiplier > 0)
+            {
+                spawnDeley -= Time.deltaTime * 0.9f;
+                spawnDeley = Mathf.Max(spawnDeley, 0.3f);
+                Vector2 position = GetPointInSpawnArea();
+                GameObject go = (GameObject)Instantiate(bombPrefab, transform);
+                go.transform.localPosition = new Vector2(position.x, position.y);
+                GameManager.Bombs.Add(go);
+                //shouldSpawn = false;
+            }
+                //go.transform.SetParent(transform);
         }
     }
 

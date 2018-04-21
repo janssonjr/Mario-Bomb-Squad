@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System;
 
 public class InputManager : MonoBehaviour {
 
@@ -10,10 +11,33 @@ public class InputManager : MonoBehaviour {
     public LayerMask layerMask;
     public GameObject ballObject;
     private Ball pressedObject;
+    private float sizeMultiplier;
 
     private void OnEnable()
     {
         pressedObject = null;
+        sizeMultiplier = 1f;
+        EventManager.onGameEvent += OnGameEvent;
+    }
+
+    private void OnDisable()
+    {
+        EventManager.onGameEvent += OnGameEvent;
+    }
+
+    private void OnGameEvent(EventManager.GameEvent obj)
+    {
+        if(obj.myType == EventManager.GameEvent.EventType.BiggerBall)
+        {
+            sizeMultiplier = obj.myAmountF;
+            if(pressedObject != null)
+            {
+                var rt = pressedObject.GetComponent<RectTransform>();
+                rt.sizeDelta = rt.sizeDelta * sizeMultiplier;
+            }
+            StartCoroutine(ResetSize(obj.myDurration));
+
+        }
     }
 
     void Start () {
@@ -44,17 +68,30 @@ public class InputManager : MonoBehaviour {
         {
             if(pressedObject != null)
             {
+                
                 bool success = pressedObject.OnReleased();
                 if(success == true)
                     SpawnNewBall();
                 pressedObject = null;
             }
-
         }
     }
 
     void SpawnNewBall()
     {
-        Instantiate(ballObject, pressedObject.transform.parent);
+        GameObject ob = Instantiate(ballObject, pressedObject.transform.parent);
+        var rt = ob.GetComponent<RectTransform>();
+        rt.sizeDelta = rt.sizeDelta * sizeMultiplier;
+    }
+
+    IEnumerator ResetSize(float aDuration)
+    {
+        yield return new WaitForSeconds(aDuration);
+        sizeMultiplier = 1f;
+        if(pressedObject != null)
+        {
+            var rt = pressedObject.GetComponent<RectTransform>();
+            rt.sizeDelta = rt.sizeDelta * sizeMultiplier;
+        }
     }
 }

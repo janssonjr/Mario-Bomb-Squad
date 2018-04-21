@@ -10,17 +10,16 @@ public class Ball : MonoBehaviour {
 
     public float shootforce;
     Transform aimPosTransform;
-    Vector2 aimPosition;
     bool wasPressed;
     Rigidbody2D rb;
     Vector2 startPosition;
     UILineRenderer line;
     List<Vector2> points = new List<Vector2>();
     bool wasShot;
-    Vector2 shotDirection;
     CircleCollider2D shotArea;
     CircleCollider2D myCollider;
-
+	int myScore;
+    RectTransform myRect;
 
     private void OnEnable()
     {
@@ -49,13 +48,36 @@ public class Ball : MonoBehaviour {
         line.SetAllDirty();
         shotArea = transform.parent.Find("ShotArea").GetComponent<CircleCollider2D>();
         myCollider = GetComponent<CircleCollider2D>();
+		myScore = 0;
+
+
+        myRect = GetComponent<RectTransform>();
+    }
+
+    void ChangeSize(float sizeMultiplier)
+    {
+        var rectTransform = GetComponent<RectTransform>();
+        rectTransform.sizeDelta = rectTransform.sizeDelta * sizeMultiplier;
     }
 
     void Update ()
     {
         if(wasShot == true)
         {
-            transform.position += new Vector3(shotDirection.x, shotDirection.y, 0f) * 300 * Time.deltaTime;
+            //transform.position += new Vector3(shotDirection.x, shotDirection.y, 0f) * 300 * Time.deltaTime;
+            bool isInside = Camera.main.pixelRect.Contains(myRect.position);
+            Debug.Log(Camera.main.pixelRect.size);
+            if(isInside == false && myScore > 0)
+            {
+                EventManager.Score(myScore * 100);
+                Destroy(gameObject);
+                //rb.velocity = Vector2.zero;
+            }
+            //if(render.isVisible == false)
+            //{
+            //EventManager.Score(myScore);
+            //Destroy(gameObject);
+            //}
         }
 	}
 
@@ -94,9 +116,9 @@ public class Ball : MonoBehaviour {
         rb.bodyType = RigidbodyType2D.Dynamic;
         Vector2 direction = (aimPosTransform.position - transform.position/*new Vector2(transform.position.x, transform.position.y)*/);
 
-        shotDirection = direction.normalized;
         rb.velocity = direction.normalized * shootforce;
-        Destroy(gameObject, 6f);
+        wasShot = true;
+        //Destroy(gameObject, 6f);
         return true;
     }
 
@@ -114,9 +136,8 @@ public class Ball : MonoBehaviour {
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Bomb") && rb.bodyType == RigidbodyType2D.Dynamic)
         {
-            EventManager.Score(1);
-            collision.GetComponent<Dissolve>().StartDissolve();
+			myScore++;
+			collision.SendMessage("OnHit");
         }
     }
-
 }

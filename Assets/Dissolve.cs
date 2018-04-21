@@ -1,13 +1,13 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Dissolve : MonoBehaviour {
-
     SpriteRenderer mySpriteRenderer;
     Image myImage;
-
+    bool destroyOnComplete;
     private void OnEnable()
     {
         mySpriteRenderer = GetComponent<SpriteRenderer>();
@@ -20,11 +20,22 @@ public class Dissolve : MonoBehaviour {
         {
             myImage.material = new Material(myImage.material);
         }
+        destroyOnComplete = true;
     }
 
-    public void StartDissolve()
+    public void DestroyOnComplete(bool aShouldDestroyOnComplete)
     {
-        iTween.ValueTo(gameObject, iTween.Hash("from", 0f, "to", 1f, "onupdate", "ChangeDissolve", "easetype", iTween.EaseType.linear, "oncomplete", "DissolveComplete", "time", 0.5f));
+        destroyOnComplete = aShouldDestroyOnComplete;
+    }
+
+    public void SetThreshold(float aThreshold)
+    {
+        ChangeDissolve(aThreshold);
+    }
+
+    public void StartDissolve(float from = 0f, float to = 1f, iTween.EaseType easeType = iTween.EaseType.linear, float time = 0.5f)
+    {
+        iTween.ValueTo(gameObject, iTween.Hash("from", from, "to", to, "onupdate", "ChangeDissolve", "easetype", easeType, "oncomplete", "DissolveComplete", "time", time));
         Collider2D collider2D = GetComponent<BoxCollider2D>();
         if(collider2D != null)
         {
@@ -42,6 +53,12 @@ public class Dissolve : MonoBehaviour {
 
     void DissolveComplete()
     {
-        Destroy(gameObject);
+        //Spawn powerup
+        gameObject.SendMessage("DissolveDone", SendMessageOptions.DontRequireReceiver);
+
+        //if(destroyOnComplete == true)
+            //Destroy(gameObject);
     }
+
+
 }

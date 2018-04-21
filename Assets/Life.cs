@@ -1,10 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+using System;
 
 public class Life : MonoBehaviour {
 
-	// Use this for initialization
+    public int id;
+    private Dissolve dissolve;
+
 	void Start () {
         SetUp();
 	}
@@ -12,15 +16,18 @@ public class Life : MonoBehaviour {
     public void SetUp()
     {
         gameObject.SetActive(true);
-        GameManager.lives.Add(gameObject);
+        dissolve.SetThreshold(0f);
+        //GameManager.Lives.Add(gameObject);
     }
 
     private void OnEnable()
     {
+        dissolve = GetComponent<Dissolve>();
     }
 
     private void OnDisable()
     {
+        dissolve.SetThreshold(1f);
     }
 
     // Update is called once per frame
@@ -33,11 +40,22 @@ public class Life : MonoBehaviour {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Bomb"))
         {
             gameObject.SetActive(false);
-            GameManager.lives.Remove(gameObject);
+            int index = LifeManager.lives.FindIndex((l)=> l.id == id);
+            if (index == -1)
+            {
+                Debug.LogError("Life with Id: "+ id.ToString() + " doesn't exist in LifeManager.lives");
+                return;
+            }
+            gameObject.SetActive(false);
+            //GameManager.Lives.Remove(gameObject);
             EventManager.LifeLost();
             Destroy(collision.gameObject);
         }
     }
 
-    
+    public void Recreate()
+    {
+        dissolve.StartDissolve(1, 0, iTween.EaseType.easeInBack);
+        dissolve.DestroyOnComplete(false);
+    }
 }

@@ -13,6 +13,8 @@ public class CanvasManager : MonoBehaviour {
 
     GraphicRaycaster raycaster;
 
+    
+
     private void Awake()
     {
         instance = this;
@@ -31,6 +33,7 @@ public class CanvasManager : MonoBehaviour {
 
     private void OnEnable()
     {
+        instance = this;
         EventManager.onStateEvent += OnStateEvent;
     }
 
@@ -57,6 +60,13 @@ public class CanvasManager : MonoBehaviour {
         return instance.raycaster;
     }
 	
+    //public static RectTransform GetRectTransform()
+    //{
+    //    if (instance == null)
+    //        instance = this;
+    //    return instance.GetComponent<RectTransform>();
+    //}
+
 	// Update is called once per frame
 	void Update () {
 		

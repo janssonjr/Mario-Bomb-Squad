@@ -16,7 +16,7 @@ Shader "TJ/Dissolve"
 		_ColorMask("Color Mask", Float) = 15
 
 		_NoiseTex("Noise Texture", 2D) = "White" {}
-		[PerRendererData]_Threshold("Threshold", Range(0, 1)) = 0
+		_Threshold("Threshold", Range(0, 1)) = 0
 
 		[Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip("Use Alpha Clip", Float) = 0
 	}
@@ -107,7 +107,7 @@ Shader "TJ/Dissolve"
 		// color = IN.texcoord;
 		float sampledNoise = tex2Dlod(_NoiseTex, float4(IN.texcoord.xy, 0, 0));
 		float threshold = _Time * _Threshold;
-		clip(sampledNoise - threshold);
+		clip(sampledNoise - _Threshold);
 		//color.a *= step(_Threshold, sampledNoise);
 
 #ifdef UNITY_UI_CLIP_RECT
